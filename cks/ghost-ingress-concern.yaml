@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  name: ghost-blog-ingress
+  namespace: ghost-blog
+spec:
+  rules:
+  - host: cks-ingress.com
+    http:
+      paths:
+      - backend:
+          serviceName: ghost-blog-service
+          servicePort: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - cks-ingress.com
+    secretName: ghost-blog

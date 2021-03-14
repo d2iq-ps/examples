@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ghost-blog
+spec:
+  finalizers:
+  - kubernetes
+---
+apiVersion: v1
+data:
+  server.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURIRENDQWdTZ0F3SUJBZ0lRTU4zRGhGMDJtczAwQnFUSDAyYkJJakFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEl4TURNeE5EQXhNREExT0ZvWERUSXlNRE14TkRBeApNREExT0Zvd1lERVZNQk1HQTFVRUNoTU1jM2x6ZEdWdE9tNXZaR1Z6TVVjd1JRWURWUVFERXo1emVYTjBaVzA2CmJtOWtaVHBuYUc5emRDMWliRzluTFdSbGNHeHZlVzFsYm5RdVoyaHZjM1F0WW14dlp5NXdiMlF1WTJ4MWMzUmwKY2k1c2IyTmhiREJaTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEEwSUFCS1FnSnd2QVFXazlGU2dVa3J0ZgpTd1FVUzA4TzFublVRNENUK1ZBYWppb2x2djJUUEhlUWYzcDBJVnh1bkJQS0hJZjJBWVRRY2Y3Yk9zMlBBNnF6Cm9DQ2pnZWN3Z2VRd0RnWURWUjBQQVFIL0JBUURBZ1dnTUJNR0ExVWRKUVFNTUFvR0NDc0dBUVVGQndNQk1Bd0cKQTFVZEV3RUIvd1FDTUFBd0h3WURWUjBqQkJnd0ZvQVVHRjZwanNIcTJnMnNKOGgxMUQ0cEQzWHVWbUV3Z1kwRwpBMVVkRVFTQmhUQ0Jnb0l2WjJodmMzUXRZbXh2WnkxelpYSjJhV05sTG1kb2IzTjBMV0pzYjJjdWMzWmpMbU5zCmRYTjBaWEl1Ykc5allXeUNRMmRvYjNOMExXSnNiMmN0WkdWd2JHOTViV1Z1ZEMwMlpqVTNZMlJpWkRjM0xYTjIKT1dkdExtZG9iM04wTFdKc2IyY3VjRzlrTG1Oc2RYTjBaWEl1Ykc5allXeUhCTUNvUkJTSEJBb0FIUlF3RFFZSgpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFLamJHT3JJK25OaGVEZDdIUXVaZ1FEU21ZUmVwdGJzZjFUUUlsSDNnaHFECjZrN0dRSmQ4MXJSTXZweGVQV2ZpeTRMbmxoYWdHVXRnc0lKUVpJdkhvUWoySXJJRjZuUmF4NE1YYnlrb1JJRzMKTGlyNm50TW0yWG8vYUJZNFFmODFFbEVBeFp0Z1dHRUw4WnBsbFNORGZiSkdraVZ6ZGNQUWZFMXMxdGkvRUVKUApNUWVzc2YzNXVETFF1VGpibFpTUDIwMDlTbDhDRHFGcUIyc29FakdyVGRMQU1JNVBqR0d1Zk1YQi9pdVJrcG1xClZqSlpRd0VNSm5WMGlGOFBobTk2VlhUblQwV3JSc21qY1VqeUVoM1NUWDh4V3AxWEtsbVJZdkpyMXJUWTV1eEYKRWRNL3pnVTJ4Ym1la1NRNkRzVjBkYXlRNFJCRjhHTDIzS0YydGMxbGFQND0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  server-key.pem: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUd5ZDhGMTFrbFZZQ1pPNDRwREtmYWFmQ3QxZlA2WGJ1MDl0bjljN2hyS01vQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFcENBbkM4QkJhVDBWS0JTU3UxOUxCQlJMVHc3V2VkUkRnSlA1VUJxT0tpVysvWk04ZDVCLwplblFoWEc2Y0U4b2NoL1lCaE5CeC90czZ6WThEcXJPZ0lBPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+
+kind: Secret
+metadata:
+  namespace: ghost-blog
+  name: nginx-secrets
+type: Opaque
+---
+apiVersion: v1
+data:
+  nginx-secure.conf: |
+          server {
+            listen 443 ssl;
+            server_name  localhost;
+            ssl_certificate /etc/ssl/nginx.crt;
+            ssl_certificate_key /etc/ssl/nginx.key;
+            location / {
+              proxy_pass http://localhost:2368;
+            }
+          }
+kind: ConfigMap
+metadata:
+  name: nginx-sidecar-conf
+  namespace: ghost-blog
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: ghost-blog-secure-deployment
+  namespace: ghost-blog
+spec:
+  selector:
+    matchLabels:
+      app: ghost-secure
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: ghost-secure
+    spec:
+      containers:
+      - name: ghost
+        image: ghost:3.42
+        env:
+        - name: url
+          value: http://localhost:3001
+        - name: NODE_ENV
+          value: development   
+        ports:
+        - containerPort: 3001
+      - name: nginx
+        #Alter image ot test sidecarconstraint 
+        image: nginx
+        ports:
+        - containerPort: 443
+        volumeMounts:
+        - mountPath: /etc/ssl/
+          name: nginx-secrets
+          readOnly: true
+        - mountPath: /etc/nginx/conf.d/
+          name: nginx-config
+          readOnly: true
+        securityContext:
+          capabilities:
+          add: ["NET_ADMIN"]
+      volumes:
+      - name: nginx-secrets
+        secret:
+          defaultMode: 420
+          items:
+          - key: server.crt
+            path: nginx.crt
+          - key: server-key.pem
+            path: nginx.key
+          secretName: nginx-secrets
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: nginx-secure.conf
+            path: default.conf
+          name: nginx-sidecar-conf
+        name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost-blog-secure-service
+  namespace: ghost-blog
+spec:
+  selector:
+    app: ghost-secure
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 443
+      

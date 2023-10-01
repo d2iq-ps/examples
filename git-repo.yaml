@@ -1,0 +1,16 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  labels:
+    d2iq-ps.com/class: dka300
+  name: examples
+  #namespace: kommander-flux
+spec:
+  gitImplementation: go-git
+  interval: 1m0s
+  ref:
+    branch: dka300
+  #secretRef:
+  #  name: dka300-credentials
+  timeout: 1m0s
+  url: https://github.com/d2iq-ps/examples.git

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: httpd
+  name: httpd
+spec:
+  containers:
+  - image: httpd
+    name: httpd
+    resources: {}
+    env:
+    - name: SECRET
+      value: "1111222223333444"
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+    volumeMounts:
+    - mountPath: /usr/local/apache2/logs
+      name: emptydir
+  volumes:
+  - name: emptydir
+    emptyDir: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
